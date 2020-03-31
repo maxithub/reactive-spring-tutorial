@@ -16,7 +16,9 @@ public class C02ReactiveProgramming101 {
     }
 
     public static void main(String[] args) {
-        var books = getMostExpensiveBooksByCategoryReactive(Flux.just(InMemoryDataSource.books));
-        books.doOnNext(System.out::println).subscribe();
+        var flux = getMostExpensiveBooksByCategoryReactive(Flux.just(InMemoryDataSource.books));
+        flux = flux.doOnNext(System.out::println);
+        System.out.println("什么都不会发生，直到pipeline开始");
+        flux.subscribe();
     }
 }
