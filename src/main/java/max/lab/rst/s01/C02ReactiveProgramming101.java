@@ -9,16 +9,16 @@ public class C02ReactiveProgramming101 {
     // 返回一个包含每种类别中最贵的书的列表, 响应式编程
     public static Flux<Book> getMostExpensiveBooksByCategoryReactive(Flux<Book> books) {
         return books.collectMultimap(Book::getCategory)
-            .flatMapMany(m -> Flux.fromIterable(m.entrySet()))
-            .flatMap(e -> Flux.fromIterable(e.getValue())
-                            .sort(Comparator.comparing(Book::getPrice).reversed())
-                            .next());
+                .flatMapMany(m -> Flux.fromIterable(m.entrySet()))
+                .flatMap(e -> Flux.fromIterable(e.getValue())
+                                .sort(Comparator.comparing(Book::getPrice).reversed())
+                                .next());
     }
 
     public static void main(String[] args) {
-        var flux = getMostExpensiveBooksByCategoryReactive(Flux.just(InMemoryDataSource.books));
-        flux = flux.doOnNext(System.out::println);
+        var pipeline = getMostExpensiveBooksByCategoryReactive(Flux.just(InMemoryDataSource.books));
+        pipeline = pipeline.doOnNext(System.out::println);
         System.out.println("什么都不会发生，直到pipeline开始");
-        flux.subscribe();
+        pipeline.subscribe();
     }
 }
