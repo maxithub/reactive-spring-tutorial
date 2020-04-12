@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+/***
+ * Reactor的API非常丰富和功能齐全，大家在coding的时候要搜索和查阅资料，尽量用这些API来实现程序的流转/返回/异常处理等。
+ */
 public class C01ReactorAPIs {
 
     private static void createFluxFromExistingData() {
@@ -21,6 +24,17 @@ public class C01ReactorAPIs {
         subscribeFlux("streamFlux", streamFlux);
         var rangeFlux = Flux.range(1, 6);
         subscribeFlux("rangeFlux", rangeFlux);
+    }
+
+    private static void createFluxProgrammatically() {
+        var generateFlux = Flux.generate(() -> 1, (state, sink) -> {
+            sink.next("message #" + state);
+            if (state == 10) {
+                sink.complete();
+            }
+            return state + 1;
+        });
+        subscribeFlux("generateFlux", generateFlux);
     }
 
     private static void subscribeFlux(String varName, Flux<?> flux) {
@@ -60,15 +74,59 @@ public class C01ReactorAPIs {
         subscribeFlux("flatMapFlux", flatMapFlux);
     }
 
-    private static void next() {
+    private static void useThenForFlow() {
+        var thenMono = Mono.just("world")
+                .map(n -> "hello " + n)
+                .doOnNext(System.out::println)
+                .thenReturn("do something else");
+        blockMono("thenMono",thenMono);
+    }
 
+    private static void monoFluxInterchange() {
+        var monoFlux = Mono.just(1).flux();
+        subscribeFlux("monoFlux", monoFlux);
+        var fluxMono = Flux.just(1, 2, 3).collectList();
+        blockMono("fluxMono", fluxMono);
+    }
+
+    private static void zipMonoOrFlux() {
+        var userId = "max";
+        var monoProfile = Mono.just(userId + "的详细信息");
+        var monoLatestOrder = Mono.just(userId + "的最新订单");
+        var monoLatestReview = Mono.just(userId + "的最新评论");
+        var zipMono = Mono.zip(monoProfile, monoLatestOrder, monoLatestReview)
+                .doOnNext(t -> System.out.printf("%s的主页，%s, %s, %s%n", userId, t.getT1(), t.getT2(), t.getT3()));
+        blockMono("zipMono", zipMono);
+    }
+
+    private static void errorHandling() {
+        var throwExceptionFlux = Flux.range(1, 10).map(i -> {
+            if (i > 5) {
+                throw (new RuntimeException("Something wrong"));
+            }
+            return "item #" + i;
+        });
+        subscribeFlux("throwExceptionFlux", throwExceptionFlux);
+
+        var errorFlux = Flux.range(1, 10).flatMap(i -> {
+            if (i > 5) {
+                return Mono.error(new RuntimeException("Something wrong"));
+            }
+            return Mono.just("item #" + i);
+        });
+        subscribeFlux("errorFlux", errorFlux);
     }
 
     public static void main(String[] args) {
         createFluxFromExistingData();
         createMonoFromExistingData();
+        createFluxProgrammatically();
         createMonoAsync();
         mapVsFlatMap();
+        monoFluxInterchange();
+        useThenForFlow();
+        zipMonoOrFlux();
+        errorHandling();
     }
 
 }
