@@ -2,8 +2,12 @@ package max.lab.rst.s03;
 
 import max.lab.rst.domain.Book;
 import max.lab.rst.domain.InMemoryDataSource;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
@@ -22,7 +26,19 @@ public class C01AnnotationBased {
 
     @PostMapping("book")
     public Mono<ResponseEntity<?>> create(@Valid @RequestBody Book book,
-                                          UriComponentsBuilder ucb) {
+                                          BindingResult bindingResult,
+                                          UriComponentsBuilder ucb)
+            throws MethodArgumentNotValidException {
+        Optional<Book> theBook = InMemoryDataSource.findBookById(book.getIsbn());
+        if (theBook.isPresent()) {
+            bindingResult.rejectValue("isbn", "already.exists", "already exists");
+        }
+        if (bindingResult.hasErrors()) {
+            throw (new MethodArgumentNotValidException(
+                    // https://stackoverflow.com/questions/442747/getting-the-name-of-the-currently-executing-method
+                    new MethodParameter(new Object(){}.getClass().getEnclosingMethod(), 0),
+                    bindingResult));
+        }
         InMemoryDataSource.saveBook(book);
         return Mono.just(ResponseEntity.created(
                 ucb.path("/annotated/book/").path(book.getIsbn()).build().toUri()
