@@ -3,11 +3,13 @@ package max.lab.rst.s03;
 import max.lab.rst.domain.Book;
 import max.lab.rst.domain.InMemoryDataSource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.validation.Valid;
 import java.util.Optional;
 
 @RequestMapping("/annotated")
@@ -19,7 +21,8 @@ public class C01AnnotationBased {
     }
 
     @PostMapping("book")
-    public Mono<ResponseEntity<?>> create(@RequestBody Book book, UriComponentsBuilder ucb) {
+    public Mono<ResponseEntity<?>> create(@Valid @RequestBody Book book,
+                                          UriComponentsBuilder ucb) {
         InMemoryDataSource.saveBook(book);
         return Mono.just(ResponseEntity.created(
                 ucb.path("/annotated/book/").path(book.getIsbn()).build().toUri()
@@ -38,6 +41,17 @@ public class C01AnnotationBased {
             return Mono.just(ResponseEntity.notFound().build());
         }
         return Mono.just(ResponseEntity.ok(book.get()));
+    }
+
+    @PutMapping("book/{isbn}")
+    public Mono<ResponseEntity<?>> update(@PathVariable String isbn,
+                                          @RequestBody Book book) {
+        Optional<Book> theBook = InMemoryDataSource.findBookById(isbn);
+        if (!theBook.isPresent()) {
+            return Mono.just(ResponseEntity.notFound().build());
+        }
+        InMemoryDataSource.saveBook(book);
+        return Mono.just(ResponseEntity.ok().build());
     }
 
     @DeleteMapping("book/{isbn}")
