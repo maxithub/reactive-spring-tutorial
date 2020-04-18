@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 public class Book {
+    private String isbn;
     private String title;
     private BigDecimal price;
     private String category;
