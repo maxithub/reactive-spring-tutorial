@@ -26,19 +26,20 @@ public class C01AnnotationBased {
 
     @PostMapping("book")
     public Mono<ResponseEntity<?>> create(@Valid @RequestBody Book book,
-                                          BindingResult bindingResult,
+//                                          BindingResult bindingResult,
                                           UriComponentsBuilder ucb)
             throws MethodArgumentNotValidException {
-        Optional<Book> theBook = InMemoryDataSource.findBookById(book.getIsbn());
-        if (theBook.isPresent()) {
-            bindingResult.rejectValue("isbn", "already.exists", "already exists");
-        }
-        if (bindingResult.hasErrors()) {
-            throw (new MethodArgumentNotValidException(
-                    // https://stackoverflow.com/questions/442747/getting-the-name-of-the-currently-executing-method
-                    new MethodParameter(new Object(){}.getClass().getEnclosingMethod(), 0),
-                    bindingResult));
-        }
+//        只有在spring-boot-starter-web被引入的情况下，才有用
+//        Optional<Book> theBook = InMemoryDataSource.findBookById(book.getIsbn());
+//        if (theBook.isPresent()) {
+//            bindingResult.rejectValue("isbn", "already.exists", "already exists");
+//        }
+//        if (bindingResult.hasErrors()) {
+//            throw (new MethodArgumentNotValidException(
+//                    // https://stackoverflow.com/questions/442747/getting-the-name-of-the-currently-executing-method
+//                    new MethodParameter(new Object(){}.getClass().getEnclosingMethod(), 0),
+//                    bindingResult));
+//        }
         InMemoryDataSource.saveBook(book);
         return Mono.just(ResponseEntity.created(
                 ucb.path("/annotated/book/").path(book.getIsbn()).build().toUri()
