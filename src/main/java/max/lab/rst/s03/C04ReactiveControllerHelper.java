@@ -11,6 +11,8 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
+import reactor.util.function.Tuples;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
@@ -27,7 +29,7 @@ public class C04ReactiveControllerHelper {
 
     @FunctionalInterface
     public interface ExtraValidator<T> {
-        void validate(T t, Errors errors);
+        Tuple2<Mono<T>, Errors> validate(T t, Errors errors);
     }
 
     public static <T> Mono<T> validate(Validator validator,
@@ -36,22 +38,26 @@ public class C04ReactiveControllerHelper {
     }
 
     public static <T> Mono<T> validate(Validator validator,
-                                    @Nullable ExtraValidator<T> functionalValidator,
+                                    @Nullable ExtraValidator<T> extraValidator,
                                     Mono<T> mono) {
         Assert.notNull(validator, "validator must NOT be null");
         Assert.notNull(mono, "mono must NOT be null");
 
-        return mono.flatMap(t -> {
-            Errors errors = new BeanPropertyBindingResult(t, t.getClass().getName());
-            validator.validate(t, errors);
-            if (functionalValidator != null) {
-                functionalValidator.validate(t, errors);
-            }
-            if (errors.hasErrors()) {
-                return Mono.error(new ValidationException(errors));
-            }
-            return Mono.just(t);
-        });
+        return mono.map(t -> {
+                    Errors errors = new BeanPropertyBindingResult(t, t.getClass().getName());
+                    validator.validate(t, errors);
+                    return Tuples.of(t, errors);
+                })
+                .map(tuple2 -> extraValidator != null ?
+                                extraValidator.validate(tuple2.getT1(), tuple2.getT2()) :
+                                Tuples.of(Mono.just(tuple2.getT1()), tuple2.getT2()))
+                .flatMap(tuple2 -> {
+                    var errors = tuple2.getT2();
+                    if (errors.hasErrors()) {
+                        return Mono.error(new ValidationException(errors));
+                    }
+                    return tuple2.getT1();
+                });
     }
 
     public static <T> Mono<T> requestBodyToMono(ServerRequest request,
@@ -62,7 +68,7 @@ public class C04ReactiveControllerHelper {
 
     public static <T> Mono<T> requestBodyToMono(ServerRequest request,
                                                 Validator validator,
-                                                ExtraValidator extraValidator,
+                                                ExtraValidator<T> extraValidator,
                                                 Class<T> clz) {
         return validate(validator, extraValidator, request.bodyToMono(clz));
     }

@@ -9,8 +9,8 @@ import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-//import org.springframework.web.servlet.NoHandlerFoundException;
-//import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+// import org.springframework.web.servlet.NoHandlerFoundException;
+// import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,23 +22,23 @@ import java.util.stream.Collectors;
  *
  * 只有在spring-boot-starter-web被引入的情况下，才有用
  */
-//@ControllerAdvice
+// @ControllerAdvice
 public class C02ControllerAdviceExceptionHandler {
-//public class C02ControllerAdviceExceptionHandler extends ResponseEntityExceptionHandler {
-//    @RequiredArgsConstructor
-//    @Data
-//    public static class Error {
-//        private final List<InvalidField> invalidFields;
-//        private final List<String> errors;
-//    }
-//
-//    @RequiredArgsConstructor
-//    @Data
-//    public static class InvalidField {
-//        private final String name;
-//        private final String message;
-//    }
-//
+// public class C02ControllerAdviceExceptionHandler extends ResponseEntityExceptionHandler {
+   @RequiredArgsConstructor
+   @Data
+   public static class Error {
+       private final List<InvalidField> invalidFields;
+       private final List<String> errors;
+   }
+
+   @RequiredArgsConstructor
+   @Data
+   public static class InvalidField {
+       private final String name;
+       private final String message;
+   }
+
 //    @Override
 //    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
 //                                                                  HttpHeaders headers,
@@ -53,7 +53,7 @@ public class C02ControllerAdviceExceptionHandler {
 //        Error error = new Error(invalidFields, errors);
 //        return handleExceptionInternal(ex, error, headers, status, request);
 //    }
-//
+
 //    @Override
 //    protected ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex,
 //                                                                   HttpHeaders headers,

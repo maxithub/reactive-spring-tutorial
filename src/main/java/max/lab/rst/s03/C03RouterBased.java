@@ -3,6 +3,9 @@ package max.lab.rst.s03;
 import lombok.RequiredArgsConstructor;
 import max.lab.rst.domain.Book;
 import max.lab.rst.domain.InMemoryDataSource;
+
+import java.util.Optional;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.Validator;
@@ -12,6 +15,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuples;
 
 @RequiredArgsConstructor
 @Configuration
@@ -28,11 +32,25 @@ public class C03RouterBased {
     }
 
     private Mono<ServerResponse> create(ServerRequest serverRequest) {
-        return C04ReactiveControllerHelper.requestBodyToMono(serverRequest, validator, Book.class)
+        return C04ReactiveControllerHelper.requestBodyToMono(serverRequest, validator, 
+                (t, errors) -> {
+                    Optional<Book> theBook = InMemoryDataSource.findBookById(t.getIsbn());
+                    if (theBook.isPresent()) {
+                        errors.rejectValue("isbn", "already.exists", "Already exists");
+                    }
+                    return Tuples.of(Mono.just(t), errors);
+                }, Book.class)
                 .map(InMemoryDataSource::saveBook)
                 .flatMap(book -> ServerResponse.created(
-                        UriComponentsBuilder.fromHttpRequest(serverRequest.exchange().getRequest())
-                            .path(PATH_PREFIX + "book").path(book.getIsbn()).build().toUri())
+                    UriComponentsBuilder.fromHttpRequest(serverRequest.exchange().getRequest())
+                        .path(PATH_PREFIX + "book").path(book.getIsbn()).build().toUri())
                         .build());
+
+        // return C04ReactiveControllerHelper.requestBodyToMono(serverRequest, validator, Book.class)
+        //         .map(InMemoryDataSource::saveBook)
+        //         .flatMap(book -> ServerResponse.created(
+        //                 UriComponentsBuilder.fromHttpRequest(serverRequest.exchange().getRequest())
+        //                     .path(PATH_PREFIX + "book").path(book.getIsbn()).build().toUri())
+        //                 .build());
     }
 }
