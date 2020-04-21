@@ -29,7 +29,7 @@ public class C04ReactiveControllerHelper {
 
     @FunctionalInterface
     public interface ExtraValidator<T> {
-        Tuple2<Mono<T>, Errors> validate(T t, Errors errors);
+        Mono<Tuple2<T, Errors>> validate(T t, Errors errors);
     }
 
     public static <T> Mono<T> validate(Validator validator,
@@ -48,15 +48,19 @@ public class C04ReactiveControllerHelper {
                     validator.validate(t, errors);
                     return Tuples.of(t, errors);
                 })
-                .map(tuple2 -> extraValidator != null ?
-                                extraValidator.validate(tuple2.getT1(), tuple2.getT2()) :
-                                Tuples.of(Mono.just(tuple2.getT1()), tuple2.getT2()))
+                .flatMap(tuple2 -> {
+                    Mono<Tuple2<T, Errors>> aMono = Mono.empty();
+                    if (extraValidator != null) {
+                        aMono = extraValidator.validate(tuple2.getT1(), tuple2.getT2());
+                    }
+                    return aMono.switchIfEmpty(Mono.just(tuple2)); // Ensure there will data flowing in the pipeline
+                })
                 .flatMap(tuple2 -> {
                     var errors = tuple2.getT2();
                     if (errors.hasErrors()) {
                         return Mono.error(new ValidationException(errors));
                     }
-                    return tuple2.getT1();
+                    return Mono.just(tuple2.getT1());
                 });
     }
 

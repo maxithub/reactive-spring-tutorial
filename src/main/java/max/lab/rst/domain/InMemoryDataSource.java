@@ -1,5 +1,7 @@
 package max.lab.rst.domain;
 
+import reactor.core.publisher.Mono;
+
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Map;
@@ -40,5 +42,9 @@ public final class InMemoryDataSource {
 
     public static void removeBook(Book book) {
         booksMap.remove(book.getIsbn());
+    }
+
+    public static Mono<Book> findBookMonoById(String isbn) {
+        return Mono.justOrEmpty(findBookById(isbn));
     }
 }

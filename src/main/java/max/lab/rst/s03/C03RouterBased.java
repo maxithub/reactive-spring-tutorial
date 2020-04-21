@@ -33,13 +33,19 @@ public class C03RouterBased {
 
     private Mono<ServerResponse> create(ServerRequest serverRequest) {
         return C04ReactiveControllerHelper.requestBodyToMono(serverRequest, validator, 
-                (t, errors) -> {
-                    Optional<Book> theBook = InMemoryDataSource.findBookById(t.getIsbn());
-                    if (theBook.isPresent()) {
-                        errors.rejectValue("isbn", "already.exists", "Already exists");
-                    }
-                    return Tuples.of(Mono.just(t), errors);
-                }, Book.class)
+                (t, errors) -> InMemoryDataSource.findBookMonoById(t.getIsbn())
+                            .map((book -> {
+                                errors.rejectValue("isbn", "already.exists", "Already exists");
+                                return Tuples.of(book, errors);
+                            }))
+//                (t, errors) -> {
+//                    Optional<Book> theBook = InMemoryDataSource.findBookById(t.getIsbn());
+//                    if (theBook.isPresent()) {
+//                        errors.rejectValue("isbn", "already.exists", "Already exists");
+//                    }
+//                    return Tuples.of(t, errors);
+//                }
+                , Book.class)
                 .map(InMemoryDataSource::saveBook)
                 .flatMap(book -> ServerResponse.created(
                     UriComponentsBuilder.fromHttpRequest(serverRequest.exchange().getRequest())
