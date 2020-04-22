@@ -72,13 +72,13 @@ public class C04ReactiveControllerHelper {
 
     public static <T> Mono<T> requestBodyToMono(ServerRequest request,
                                                 Validator validator,
-                                                ExtraValidator<T> extraValidator,
+                                                @Nullable ExtraValidator<T> extraValidator,
                                                 Class<T> clz) {
         return validate(validator, extraValidator, request.bodyToMono(clz));
     }
 
     public static <T> T convertValue(ObjectMapper objectMapper,
-                                     MultiValueMap<String, String> map,
+                                     @Nullable MultiValueMap<String, String> map,
                                      Class<T> clz) {
         Assert.notNull(objectMapper, "objectMapper must NOT be null");
         Assert.notNull(clz, "clz must NOT be null");
@@ -104,12 +104,22 @@ public class C04ReactiveControllerHelper {
                                                 ObjectMapper objectMapper,
                                                 Class<T> clz,
                                                 Validator validator) {
+        return queryParamsToMono(request, objectMapper, clz, validator, null);
+    }
+
+    public static <T> Mono<T> queryParamsToMono(ServerRequest request,
+                                                ObjectMapper objectMapper,
+                                                Class<T> clz,
+                                                Validator validator,
+                                                @Nullable ExtraValidator<T> extraValidator) {
         Assert.notNull(request, "request must NOT be null");
         Assert.notNull(objectMapper, "objectMapper must NOT be null");
         Assert.notNull(clz, "clz must NOT be null");
+        Assert.notNull(validator, "validator must NOT be null");
+
         var mono = Mono.just(request)
                 .flatMap(theRequest -> Mono.just(convertValue(objectMapper,
                         theRequest.queryParams(), clz)));
-        return validate(validator, mono);
+        return validate(validator, extraValidator, mono);
     }
 }
