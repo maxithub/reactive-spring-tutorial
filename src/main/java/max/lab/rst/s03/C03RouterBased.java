@@ -28,11 +28,47 @@ public class C03RouterBased {
     public RouterFunction<ServerResponse> routers() {
         return RouterFunctions.route()
                 .POST(PATH_PREFIX + "book", this::create)
+                .GET(PATH_PREFIX + "books", this::findAll)
+                .GET(PATH_PREFIX + "book/{isbn}", this::find)
+                .PUT(PATH_PREFIX + "book/{isbn}", this::update)
+                .DELETE(PATH_PREFIX + "book/{isbn}", this::delete)
                 .build();
     }
 
-    private Mono<ServerResponse> create(ServerRequest serverRequest) {
-        return C04ReactiveControllerHelper.requestBodyToMono(serverRequest, validator, 
+    private Mono<ServerResponse> delete(ServerRequest request) {
+        var isbn = request.pathVariable("isbn");
+        return InMemoryDataSource.findBookMonoById(isbn)
+                .flatMap(book -> {
+                    InMemoryDataSource.removeBook(book);
+                    return ServerResponse.ok().build();
+                }).switchIfEmpty(ServerResponse.notFound().build());
+    }
+
+    private Mono<ServerResponse> update(ServerRequest request) {
+        var isbn = request.pathVariable("isbn");
+        return InMemoryDataSource.findBookMonoById(isbn)
+                .flatMap(book ->
+                        C04ReactiveControllerHelper
+                                .requestBodyToMono(request, validator, Book.class)
+                                .map(InMemoryDataSource::saveBook)
+                                .flatMap(b -> ServerResponse.ok().build())
+                ).switchIfEmpty(ServerResponse.notFound().build());
+    }
+
+    private Mono<ServerResponse> find(ServerRequest request) {
+        var isbn = request.pathVariable("isbn");
+        return InMemoryDataSource.findBookMonoById(isbn)
+                .flatMap(book -> ServerResponse.ok().bodyValue(book))
+                .switchIfEmpty(ServerResponse.notFound().build());
+    }
+
+    private Mono<ServerResponse> findAll(ServerRequest request) {
+        var books = InMemoryDataSource.findAllBooks();
+        return ServerResponse.ok().bodyValue(books);
+    }
+
+    private Mono<ServerResponse> create(ServerRequest request) {
+        return C04ReactiveControllerHelper.requestBodyToMono(request, validator,
                 (t, errors) -> InMemoryDataSource.findBookMonoById(t.getIsbn())
                             .map((book -> {
                                 errors.rejectValue("isbn", "already.exists", "Already exists");
@@ -48,15 +84,8 @@ public class C03RouterBased {
                 , Book.class)
                 .map(InMemoryDataSource::saveBook)
                 .flatMap(book -> ServerResponse.created(
-                    UriComponentsBuilder.fromHttpRequest(serverRequest.exchange().getRequest())
-                        .path(PATH_PREFIX + "book").path(book.getIsbn()).build().toUri())
+                    UriComponentsBuilder.fromHttpRequest(request.exchange().getRequest())
+                            .path("/").path(book.getIsbn()).build().toUri())
                         .build());
-
-        // return C04ReactiveControllerHelper.requestBodyToMono(serverRequest, validator, Book.class)
-        //         .map(InMemoryDataSource::saveBook)
-        //         .flatMap(book -> ServerResponse.created(
-        //                 UriComponentsBuilder.fromHttpRequest(serverRequest.exchange().getRequest())
-        //                     .path(PATH_PREFIX + "book").path(book.getIsbn()).build().toUri())
-        //                 .build());
     }
 }
