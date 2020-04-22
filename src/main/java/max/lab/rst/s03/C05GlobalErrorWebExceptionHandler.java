@@ -16,8 +16,10 @@ import org.springframework.web.reactive.function.server.RequestPredicates;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,14 +59,23 @@ public class C05GlobalErrorWebExceptionHandler extends
             if (throwable instanceof ValidationException) {
                 return handleValidationException((ValidationException) throwable);
             }
+            if (throwable instanceof ResponseStatusException) {
+                return handleResponseStatusException((ResponseStatusException) throwable);
+            }
             log.error("Ops, just caught an unknown exception, " +
                     "please have a look at the stack trace of more details", throwable);
             return ServerResponse.status(INTERNAL_SERVER_ERROR).build();
         }));
     }
 
-    private Mono<ServerResponse> handleValidationException(ValidationException throwable) {
-        var errors = throwable.getErrors();
+    private Mono<ServerResponse> handleResponseStatusException(ResponseStatusException exception) {
+        var error = new Error(null, Arrays.asList(exception.getReason()));
+        return ServerResponse.status(exception.getStatus())
+                .bodyValue(error);
+    }
+
+    private Mono<ServerResponse> handleValidationException(ValidationException exception) {
+        var errors = exception.getErrors();
         var invalidFields = errors.getFieldErrors().stream()
                 .map(error -> new InvalidField(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
