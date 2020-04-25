@@ -43,17 +43,14 @@ public class C04ReactiveControllerHelper {
         Assert.notNull(validator, "validator must NOT be null");
         Assert.notNull(mono, "mono must NOT be null");
 
-        return mono.map(t -> {
+        return mono.flatMap(t -> {
                     Errors errors = new BeanPropertyBindingResult(t, t.getClass().getName());
                     validator.validate(t, errors);
-                    return Tuples.of(t, errors);
-                })
-                .flatMap(tuple2 -> {
                     Mono<Tuple2<T, Errors>> aMono = Mono.empty();
                     if (extraValidator != null) {
-                        aMono = extraValidator.validate(tuple2.getT1(), tuple2.getT2());
+                        aMono = extraValidator.validate(t, errors);
                     }
-                    return aMono.switchIfEmpty(Mono.just(tuple2)); // Ensure there will data flowing in the pipeline
+                    return aMono.switchIfEmpty(Mono.just(Tuples.of(t, errors))); // Ensure there will data flowing in the pipeline
                 })
                 .flatMap(tuple2 -> {
                     var errors = tuple2.getT2();
@@ -89,10 +86,7 @@ public class C04ReactiveControllerHelper {
         var theMap = map.entrySet().stream().map(e -> {
             String key = e.getKey();
             List<String> list = e.getValue();
-            if (list == null) {
-                return (new SimpleEntry<>(key, list));
-            }
-            if (list.size() == 1) {
+            if (list != null && list.size() == 1) {
                 return (new SimpleEntry<>(key, list.get(0)));
             }
             return e;
@@ -117,9 +111,7 @@ public class C04ReactiveControllerHelper {
         Assert.notNull(clz, "clz must NOT be null");
         Assert.notNull(validator, "validator must NOT be null");
 
-        var mono = Mono.just(request)
-                .flatMap(theRequest -> Mono.just(convertValue(objectMapper,
-                        theRequest.queryParams(), clz)));
+        var mono = Mono.just(convertValue(objectMapper, request.queryParams(), clz));
         return validate(validator, extraValidator, mono);
     }
 }
