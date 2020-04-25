@@ -1,12 +1,15 @@
 package max.lab.rst.domain;
 
+import org.springframework.util.StringUtils;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public final class InMemoryDataSource {
     public static final Book[] books = new Book[] {
@@ -46,5 +49,26 @@ public final class InMemoryDataSource {
 
     public static Mono<Book> findBookMonoById(String isbn) {
         return Mono.justOrEmpty(findBookById(isbn));
+    }
+
+    public static Collection<Book> findBooksByQuery(BookQuery query) {
+        return booksMap.values().stream()
+                .filter(book -> {
+                    var matched = true;
+                    if (!StringUtils.isEmpty(query.getTitle())) {
+                        matched &= book.getTitle().contains(query.getTitle());
+                    }
+                    if (query.getMinPrice() != null) {
+                        matched &= (book.getPrice().compareTo(query.getMinPrice()) >= 0);
+                    }
+                    if (query.getMaxPrice() != null) {
+                        matched &= (book.getPrice().compareTo(query.getMinPrice()) <= 0);
+                    }
+                    return matched;
+                })
+                .sorted(Comparator.comparing(Book::getTitle))
+                .skip((query.getPage() - 1) * query.getSize())
+                .limit(query.getSize())
+                .collect(Collectors.toList());
     }
 }

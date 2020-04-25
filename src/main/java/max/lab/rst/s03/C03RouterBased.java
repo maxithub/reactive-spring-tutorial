@@ -1,11 +1,10 @@
 package max.lab.rst.s03;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import max.lab.rst.domain.Book;
+import max.lab.rst.domain.BookQuery;
 import max.lab.rst.domain.InMemoryDataSource;
-
-import java.util.Optional;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.validation.Validator;
@@ -23,16 +22,25 @@ public class C03RouterBased {
     private static final String PATH_PREFIX = "/routed/";
 
     private final Validator validator;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public RouterFunction<ServerResponse> routers() {
         return RouterFunctions.route()
                 .POST(PATH_PREFIX + "book", this::create)
                 .GET(PATH_PREFIX + "books", this::findAll)
+                .GET(PATH_PREFIX + "query-books", this::findByPage)
                 .GET(PATH_PREFIX + "book/{isbn}", this::find)
                 .PUT(PATH_PREFIX + "book/{isbn}", this::update)
                 .DELETE(PATH_PREFIX + "book/{isbn}", this::delete)
                 .build();
+    }
+
+    private Mono<ServerResponse> findByPage(ServerRequest request) {
+        return C04ReactiveControllerHelper.queryParamsToMono(request, objectMapper,
+                    BookQuery.class, validator)
+                .flatMap(query -> ServerResponse.ok()
+                        .bodyValue(InMemoryDataSource.findBooksByQuery(query)));
     }
 
     private Mono<ServerResponse> delete(ServerRequest request) {
