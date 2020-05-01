@@ -7,6 +7,7 @@ import max.lab.rst.domain.BookQuery;
 import max.lab.rst.domain.InMemoryDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.Validator;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
@@ -15,6 +16,9 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuples;
+
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RequiredArgsConstructor
 @Configuration
@@ -75,7 +79,14 @@ public class C03RouterBased {
         return ServerResponse.ok().bodyValue(books);
     }
 
+    private AtomicInteger counter = new AtomicInteger(1);
+
     private Mono<ServerResponse> create(ServerRequest request) {
+        if (counter.getAndIncrement() < 3) {
+            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        counter.set(0);
+        
         return C04ReactiveControllerHelper.requestBodyToMono(request, validator,
                 (t, errors) -> InMemoryDataSource.findBookMonoById(t.getIsbn())
                             .map((book -> {

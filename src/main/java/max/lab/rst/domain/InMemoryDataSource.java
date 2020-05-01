@@ -62,7 +62,7 @@ public final class InMemoryDataSource {
                         matched &= (book.getPrice().compareTo(query.getMinPrice()) >= 0);
                     }
                     if (query.getMaxPrice() != null) {
-                        matched &= (book.getPrice().compareTo(query.getMinPrice()) <= 0);
+                        matched &= (book.getPrice().compareTo(query.getMaxPrice()) <= 0);
                     }
                     return matched;
                 })
