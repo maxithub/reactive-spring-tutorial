@@ -1,20 +1,19 @@
 package max.lab.rst.s4;
 
-import max.lab.rst.domain.Book;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.reactive.ClientHttpConnector;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientException;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import max.lab.rst.domain.Book;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  * https://medium.com/@filia.aleks/microservice-performance-battle-spring-mvc-vs-webflux-80d39fd81bf0
@@ -28,60 +27,66 @@ public class C01WebClientShowcases {
                 .price(BigDecimal.valueOf(23.99))
                 .build();
 
-        var webclient = WebClient.create("http://localhost:8080/routed/");
-        // HttpClient httpClient = HttpClient.create()
-        //         .tcpConfiguration(tcpClient -> {
-        //             tcpClient = tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 500);
-        //             tcpClient = tcpClient.doOnConnected(
-        //                 conn -> conn.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS))
-        //             );
-        //             return tcpClient;
-        //         });
-        // ClientHttpConnector connector = new ReactorClientHttpConnector(httpClient);
-        // var webClientWithTimeout = WebClient.builder().clientConnector(connector).build();
-        
-//        webclient.post().uri("/book")
-//                .body(Mono.just(book), Book.class)
-//                .exchange()
-//                .doOnNext(clientResponse -> System.out.println(">>>>>>> POST RESPONSE: " + clientResponse.statusCode()))
-//                .doOnError(e -> System.err.println("<<<<<< Failed to post book" + e.getMessage()))
-//                .block();
-//
-//        webclient.get().uri("/book/{isbn}", book.getIsbn())
-//                .retrieve()
-//                .bodyToMono(Book.class)
-//                .doOnNext(b -> System.out.println(">>>>>>> GET RESPONSE: " + b))
-//                .doOnError(e -> System.err.println("<<<<<< Failed to get book" + e.getMessage()))
-//                .block();
-//
-//        book.setPrice(BigDecimal.valueOf(49.99));
-//        webclient.put().uri("/book/{isbn}", book.getIsbn())
-//                .body(Mono.just(book), Book.class)
-//                .exchange()
-//                .doOnNext(clientResponse -> System.out.println(">>>>>>> PUT RESPONSE: " + clientResponse.statusCode()))
-//                .doOnError(e -> System.err.println("<<<<<< Failed to get book" + e.getMessage()))
-//                .block();
-//
-//        webclient.get().uri("/books")
-//                .retrieve()
-//                .bodyToFlux(Book.class)
-//                .doOnNext(b -> System.out.println(">>>>>>> GET RESPONSE: " + b))
-//                .doOnError(e -> System.err.println("<<<<<< Failed to get book" + e.getMessage()))
-//                .blockLast();
+        var webClient = WebClient.create("http://localhost:8080/routed");
+        webClient.post().uri("/book")
+            .body(Mono.just(book), Book.class)
+            .exchange()
+            .doOnNext(
+                clientResponse -> System.out.println(">>>>>>>> POST RESPONSE STATUS CODE: " + clientResponse.statusCode())
+            ).block();
 
+        webClient.get().uri("/book/{isbn}", book.getIsbn())
+            .retrieve()
+            .bodyToMono(Book.class)
+            .doOnNext(aBook -> System.out.println(">>>>>>> GET BOOK: " + aBook))
+            .block();
 
-        webclient.post().uri("/book")
-                .body(Mono.just(book), Book.class)
-                .exchange()
-                .flatMap(clientResponse -> {
-                    if (clientResponse.statusCode() != HttpStatus.CREATED) {
-                        return clientResponse.createException().flatMap(Mono::error);
-                    }
-                    System.out.println(">>>>>>> Book created!");
-                    return Mono.just(clientResponse);
-                })
-                .retryBackoff(3, Duration.ofSeconds(1))
-                .doOnError(e -> System.err.println(">>>>>>> Failed to post book" + e.getMessage()))
-                .block();
+        book.setPrice(BigDecimal.valueOf(39.99));
+        webClient.put().uri("/book/{isbn}", book.getIsbn())
+            .body(Mono.just(book), Book.class)
+            .exchange()
+            .doOnNext(
+                clientResponse -> System.out.println(">>>>>>>> PUT RESPONSE STATUS CODE: " + clientResponse.statusCode())
+            ).block();
+
+        webClient.get().uri("/books")
+            .retrieve()
+            .bodyToFlux(Book.class)
+            .doOnNext(aBook -> System.out.println(">>>>>>> GET BOOKS: " + aBook))
+            .blockLast();
+
+        webClient.delete().uri("/book/{isbn}", book.getIsbn())
+            .exchange()
+            .doOnNext(
+                clientResponse -> System.out.println(">>>>>>>> DELETE RESPONSE STATUS CODE: " + clientResponse.statusCode())
+            ).block();
+
+        webClient.post().uri("/book")
+            .body(Mono.just(book), Book.class)
+            .exchange()
+            .flatMap(clientResponse -> {
+                if (clientResponse.statusCode() != HttpStatus.CREATED) {
+                    return clientResponse.createException().flatMap(Mono::error);
+                }
+                System.out.println(">>>>>>>> POST RESPONSE STATUS CODE: " + clientResponse.statusCode());
+                return Mono.just(clientResponse);
+            })
+            .retryBackoff(3, Duration.ofSeconds(1))
+            .block();
+
+        var httpClient = HttpClient.create()
+                            .tcpConfiguration(
+                                tcpClient -> {
+                                    tcpClient.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 500)
+                                        .doOnConnected(
+                                            connection -> connection.addHandlerLast(new ReadTimeoutHandler(5, TimeUnit.SECONDS))
+                                        );
+                                    return tcpClient;
+                                }
+                            );
+        var connector = new ReactorClientHttpConnector(httpClient);                    
+        var webClientWithHttpTimeout = WebClient.builder()
+                                        .clientConnector(connector)
+                                        .build();
     }
 }
