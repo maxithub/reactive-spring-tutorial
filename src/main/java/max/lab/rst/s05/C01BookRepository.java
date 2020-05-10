@@ -20,24 +20,27 @@ public class C01BookRepository {
     private final DatabaseClient dbClient;
 
     public Mono<Void> insert(Book book) {
-        return dbClient.insert().into(Book.class).using(book).then();
+        return dbClient.insert().into(Book.class)
+                .using(book)
+                .then();
     }
 
     public Mono<Void> update(Book book) {
-        return dbClient.update().table(Book.class).using(book).then();
+        return dbClient.update().table(Book.class)
+                .using(book)
+                .then();
     }
 
     public Mono<Book> findById(String isbn) {
-        return dbClient.select().from(Book.class)
-                .matching(where("isbn").is(isbn))
+        return dbClient.execute("select * from book where isbn = :isbn")
+                .bind("isbn", isbn)
+                .as(Book.class)
                 .fetch()
                 .one();
     }
 
     public Flux<Book> findAll() {
-        return dbClient.select().from(Book.class)
-                .fetch()
-                .all();
+        return dbClient.select().from(Book.class).fetch().all();
     }
 
     public Mono<Void> delete(String isbn) {
@@ -47,15 +50,15 @@ public class C01BookRepository {
     }
 
     public Flux<Book> findBooksByQuery(BookQuery bookQuery) {
-        var criteria = Criteria.empty();
+        Criteria criteria = Criteria.empty();
         if (!StringUtils.isEmpty(bookQuery.getTitle())) {
-            criteria = criteria.and("title").like(bookQuery.getTitle());
+            criteria = criteria.and(where("title").like(bookQuery.getTitle()));
         }
         if (bookQuery.getMinPrice() != null) {
-            criteria = criteria.and("price").greaterThanOrEquals(bookQuery.getMinPrice());
+            criteria = criteria.and(where("price").greaterThanOrEquals(bookQuery.getMinPrice()));
         }
         if (bookQuery.getMaxPrice() != null) {
-            criteria = criteria.and("price").lessThanOrEquals(bookQuery.getMaxPrice());
+            criteria = criteria.and(where("price").lessThanOrEquals(bookQuery.getMinPrice()));
         }
         Pageable pageable = PageRequest.of(bookQuery.getPage(), bookQuery.getSize());
         return dbClient.select().from(Book.class)
