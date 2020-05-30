@@ -30,6 +30,7 @@ public class C01ReactiveLoadBalancer {
     @Bean
     public CommandLineRunner commandLineRunner(WebClient.Builder builder) {
         return (args -> builder.build().get().uri("hello").retrieve().bodyToMono(String.class)
+                .onErrorReturn("Failed to call hello endpoint")
                 .doOnNext(s -> System.out.println(">>>>>>>>>>>>>> Server Response: " + s))
                 .delayElement(Duration.ofMillis(500))
                 .repeat(3)

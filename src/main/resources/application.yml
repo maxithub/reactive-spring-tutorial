@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: reactive-spring
+  # Only works with spring-web-mvc
+  mvc:
+    throw-exception-if-no-handler-found: true
+  resources:
+    add-mappings: false
+
+  cloud:
+    loadbalancer:
+      ribbon:
+        enabled: false
+
+logging:
+  level:
+    org.springframework.cloud.client.loadbalancer: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+
+circuitBreaker:
+  default:
+    failureRateThreshold: 30
+    minimumNumberOfCalls: 10
+    slidingWindowSize: 10
+    waitDurationInOpenState: 5S
