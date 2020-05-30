@@ -1,7 +1,6 @@
 package max.lab.rst.s08;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
-import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
@@ -40,9 +39,9 @@ public class C01ReactiveCircuitBreaker {
     }
 
     private <T> T getCircuitBreakerProperty(Environment env, String id, String name, Class<T> clz, T defaultValue) {
-        String propName = String.format(PROP_NAME, id, name);
-        String defaultPropName = String.format(PROP_NAME, "default", name);
-        T value = env.getProperty(propName, clz, env.getProperty(defaultPropName, clz, defaultValue));
+        var propName = String.format(PROP_NAME, id, name);
+        var defaultPropName = String.format(PROP_NAME, "default", name);
+        var value = env.getProperty(propName, clz, env.getProperty(defaultPropName, clz, defaultValue));
         log.info(">>>>>>>>>>>>> {} or {}: {}", propName, defaultPropName, value);
         return value;
     }
