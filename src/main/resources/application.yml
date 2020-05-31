@@ -30,3 +30,5 @@ circuitBreaker:
     waitDurationInOpenState: 5S
     timeoutDuration: 5S
     cancelRunningFuture: true
+  hello:
+    waitDurationInOpenState: 30S
