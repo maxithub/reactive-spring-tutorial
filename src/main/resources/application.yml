@@ -28,3 +28,5 @@ circuitBreaker:
     minimumNumberOfCalls: 10
     slidingWindowSize: 10
     waitDurationInOpenState: 5S
+    timeoutDuration: 5S
+    cancelRunningFuture: true

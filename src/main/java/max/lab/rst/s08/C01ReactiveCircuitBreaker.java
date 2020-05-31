@@ -1,6 +1,7 @@
 package max.lab.rst.s08;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.circuitbreaker.resilience4j.ReactiveResilience4JCircuitBreakerFactory;
 import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
@@ -27,11 +28,17 @@ public class C01ReactiveCircuitBreaker {
         return factory -> factory.configureDefault(id -> {
             log.info(">>>>>>>>>>> R4J_ID: {}", id);
             return new Resilience4JConfigBuilder(id)
-                            .circuitBreakerConfig(CircuitBreakerConfig.custom()
+                            .circuitBreakerConfig(
+                                CircuitBreakerConfig.custom()
                                     .failureRateThreshold(getCircuitBreakerProperty(env, id,"failureRateThreshold", Float.class, 50F))
                                     .minimumNumberOfCalls(getCircuitBreakerProperty(env, id,"minimumNumberOfCalls", Integer.class, 100))
                                     .slidingWindowSize(getCircuitBreakerProperty(env, id,"slidingWindowSize", Integer.class, 100))
                                     .waitDurationInOpenState(getCircuitBreakerProperty(env, id,"waitDurationInOpenState", Duration.class, Duration.ofSeconds(60L)))
+                                    .build()
+                            ).timeLimiterConfig(
+                                TimeLimiterConfig.custom()
+                                    .cancelRunningFuture(getCircuitBreakerProperty(env, id,"cancelRunningFuture", Boolean.class, Boolean.TRUE))
+                                    .timeoutDuration(getCircuitBreakerProperty(env, id,"timeoutDuration", Duration.class, Duration.ofSeconds(5L)))
                                     .build()
                             ).build();
                 }
