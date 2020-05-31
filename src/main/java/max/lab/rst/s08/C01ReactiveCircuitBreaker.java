@@ -23,6 +23,7 @@ import java.time.Duration;
 public class C01ReactiveCircuitBreaker {
     private static String PROP_NAME = "circuitBreaker.%s.%s";
 
+    // https://resilience4j.readme.io/docs/circuitbreaker
     @Bean
     public Customizer<ReactiveResilience4JCircuitBreakerFactory> defaultCustomizer(Environment env) {
         return factory -> factory.configureDefault(id -> {
