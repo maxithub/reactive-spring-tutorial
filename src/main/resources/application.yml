@@ -12,18 +12,18 @@ spring:
       ribbon:
         enabled: false
 
-#    gateway:
-#      routes:
-#        - id: demo-rb-fb
-#          uri: lb://demo-client
-#          predicates:
-#            - Path=/gw/rb-fb/**
-#          filters:
-#            - name: CircuitBreaker
-#              args:
-#                name: gw-rb-fb
-#                fallbackUri: forward:/fallback
-#            - RewritePath=/gw/rb-fb/(?<path>.*), /$\{path}
+    gateway:
+      routes:
+        - id: demo-rb-fb
+          uri: lb://demo-client
+          predicates:
+            - Path=/gw/rb-fb/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: gw-rb-fb
+                fallbackUri: forward:/fb
+            - RewritePath=/gw/rb-fb/(?<path>.*), /$\{path}
 
 logging:
   level:

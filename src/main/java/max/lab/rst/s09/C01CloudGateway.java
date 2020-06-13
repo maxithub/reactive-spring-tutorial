@@ -11,40 +11,35 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 @Configuration
 public class C01CloudGateway {
-    @Bean
-    public RouteLocator routeLocator(RouteLocatorBuilder builder) {
-        return builder.routes()
-                .route("demo-http", p ->
-                        p.path("/gw/simple/**")
+        @Bean
+        public RouteLocator routeLocator(RouteLocatorBuilder builder) {
+                return builder.routes()
+                        .route("gw-simple", p -> 
+                                p.path("/gw/simple/**")
+                                        .filters(f -> f.rewritePath("/gw/simple/(?<path>.*)", "/$\\{path}"))
+                                        .uri("http://192.168.31.164:8091/")
+                        )
+                        .route("gw-lb", p -> 
+                                p.path("/gw/lb/**")
+                                        .filters(f -> f.rewritePath("/gw/lb/(?<path>.*)", "/$\\{path}"))
+                                        .uri("lb://demo-client")
+                        )
+                        // .route("gw-fb", p -> 
+                        //         p.path("/gw/fb/**")
+                        //                 .filters(f -> 
+                        //                         f.rewritePath("/gw/fb/(?<path>.*)", "/$\\{path}")
+                        //                                 .circuitBreaker(c -> c.setName("gw-fb")
+                        //                                         .               setFallbackUri("/fb"))
+                        //                 )
+                        //                 .uri("lb://demo-client")
+                        // )
+                        .build();
+        }
 
-                                .filters(f ->
-                                        f.rewritePath("/gw/simple/(?<path>.*)", "/$\\{path}")
-                                )
-                                .uri("http://localhost:8091/")
-                )
-                .route("demo-rb", p ->
-                        p.path("/gw/rb/**")
-                            .filters(f ->
-                                    f.rewritePath("/gw/rb/(?<path>.*)", "/$\\{path}")
-                            )
-                            .uri("lb://demo-client")
-                )
-                .route("demo-rb-fb", p ->
-                        p.path("/gw/rb-fb/**")
-                                .filters(f ->
-                                        f.rewritePath("/gw/rb-fb/(?<path>.*)", "/$\\{path}")
-                                                .circuitBreaker(c -> c.setName("gw-rb-fb").setFallbackUri("/fallback"))
-                                )
-                                .uri("lb://demo-client")
-                )
-                .build();
-    }
-
-    @Bean("gwRouters")
-    public RouterFunction<ServerResponse> routers() {
-        return RouterFunctions.route().GET("/fallback", request ->
-                ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .bodyValue("this is fallback value"))
-                .build();
-    }
+        @Bean("gwRouter")
+        public RouterFunction<ServerResponse> router() {
+                return RouterFunctions.route().GET("/fb", request -> 
+                                ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue("Sorry!!!"))
+                        .build();
+        }
 }
