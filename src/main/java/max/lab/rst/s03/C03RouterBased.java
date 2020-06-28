@@ -83,10 +83,10 @@ public class C03RouterBased {
     private static final AtomicInteger counter = new AtomicInteger(1);
 
     private Mono<ServerResponse> create(ServerRequest request) {  
-        if (counter.getAndIncrement() < 3) {
-            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-        counter.set(1);
+//        if (counter.getAndIncrement() < 3) {
+//            return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//        counter.set(1);
         
         return C04ReactiveControllerHelper.requestBodyToMono(request, validator,
                 (t, errors) -> InMemoryDataSource.findBookMonoById(t.getIsbn())

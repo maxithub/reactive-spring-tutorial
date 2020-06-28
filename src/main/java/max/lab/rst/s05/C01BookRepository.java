@@ -6,13 +6,13 @@ import max.lab.rst.domain.BookQuery;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.r2dbc.core.DatabaseClient;
-import org.springframework.data.r2dbc.query.Criteria;
+import org.springframework.data.relational.core.query.Criteria;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import static org.springframework.data.r2dbc.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Criteria.where;
 
 @RequiredArgsConstructor
 @Repository
