@@ -9,15 +9,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.Base64Utils;
 
-import com.google.common.base.Charsets;
-
 import max.lab.rst.ReactiveSpringTutorialApplication;
 import max.lab.rst.domain.Book;
 
 @SpringBootTest(classes = ReactiveSpringTutorialApplication.class)
 @AutoConfigureWebTestClient
 public class C04SpringBootTesting {
-	
 	@Autowired
 	private WebTestClient webTestClient;
 	
@@ -32,9 +29,9 @@ public class C04SpringBootTesting {
 		webTestClient.post()
 			.uri("/routed-r2dbc/book")
 			.bodyValue(book)
-			.header("Authorization", "Basic " + 
-					Base64Utils.encodeToString(("admin:secret").getBytes(Charsets.UTF_8)))
-			.exchange()
+			.header("Authorization", "Basic " +
+					Base64Utils.encodeToString("admin:secret".getBytes())
+			).exchange()
 			.expectStatus()
 			.isCreated();
 	}
