@@ -9,8 +9,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.Base64Utils;
-import com.google.common.base.Charsets;
-
 import max.lab.rst.ReactiveSpringTutorialApplication;
 import max.lab.rst.domain.Book;
 import max.lab.rst.s03.C03RouterBased;
@@ -18,12 +16,14 @@ import max.lab.rst.s03.C05GlobalErrorWebExceptionHandler;
 import max.lab.rst.s06.C01SecurityConfigurer;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { 
-		ReactiveSpringTutorialApplication.class,
-		C01SecurityConfigurer.class,
-		C05GlobalErrorWebExceptionHandler.class,
-		C03RouterBased.class
-	})
+@ContextConfiguration(
+		classes = {
+				ReactiveSpringTutorialApplication.class,
+				C03RouterBased.class,
+				C05GlobalErrorWebExceptionHandler.class,
+				C01SecurityConfigurer.class
+		}
+)
 @WebFluxTest
 public class C03WebFluxTesting {
 	@Autowired
@@ -40,9 +40,9 @@ public class C03WebFluxTesting {
 		webTestClient.post()
 			.uri("/routed/book")
 			.bodyValue(book)
-			.header("Authorization", "Basic " + 
-					Base64Utils.encodeToString(("admin:secret").getBytes(Charsets.UTF_8)))
-			.exchange()
+			.header("Authorization", "Basic " +
+					Base64Utils.encodeToString("admin:secret".getBytes())
+			).exchange()
 			.expectStatus()
 			.isCreated();
 	}

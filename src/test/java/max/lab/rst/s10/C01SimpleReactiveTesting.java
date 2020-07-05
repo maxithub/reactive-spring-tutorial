@@ -19,6 +19,8 @@ public class C01SimpleReactiveTesting {
 	
 	@Test
 	public void testWithMockTimer() {
+//		var flux = Flux.just("hello", "world")
+//				.delayElements(Duration.ofSeconds(3L));
 		StepVerifier.withVirtualTime(() -> Flux.just("hello", "world")
 				.delayElements(Duration.ofSeconds(3L)))
 		.expectSubscription()

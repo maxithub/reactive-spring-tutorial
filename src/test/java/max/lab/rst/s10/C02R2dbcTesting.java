@@ -16,16 +16,18 @@ import max.lab.rst.s05.C03R2dbcConfiguration;
 import reactor.test.StepVerifier;
 
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = { 
-		ReactiveSpringTutorialApplication.class,
-		C03R2dbcConfiguration.class,
-		C01BookRepository.class })
+@ContextConfiguration(
+		classes = {
+				ReactiveSpringTutorialApplication.class,
+				C03R2dbcConfiguration.class,
+				C01BookRepository.class
+		}
+)
 @DataR2dbcTest
 public class C02R2dbcTesting {
-	
 	@Autowired
 	private C01BookRepository bookRepository;
-	
+
 	@Test
 	public void testInsert() {
 		var book = Book.builder()
@@ -35,7 +37,7 @@ public class C02R2dbcTesting {
 				.title("test title")
 				.build();
 		var mono = bookRepository.insert(book)
-				.then(bookRepository.findById("1234567"));
+			.then(bookRepository.findById("1234567"));
 		StepVerifier.create(mono)
 			.expectNext(book)
 			.expectComplete()
